@@ -159,7 +159,7 @@ class AbsEmbedderModel(ABC, nn.Module):
 
         return local_scores, loss
 
-    def _compute_in_batch_neg_loss(self, q_reps, p_reps, teacher_targets=None, compute_score_func=None, **kwargs):
+    def _compute_in_batch_neg_loss(self, q_reps, p_reps, teacher_targets=None, compute_score_func=None, pos_nums=None, **kwargs):
         """
         Compute loss when only using in-batch negatives
         """
@@ -178,16 +178,25 @@ class AbsEmbedderModel(ABC, nn.Module):
                 loss = self.distill_loss(self.kd_loss_type, teacher_targets, student_scores, group_size)
 
                 idxs = torch.arange(q_reps.size(0), device=q_reps.device, dtype=torch.long)
-                targets = idxs * (p_reps.size(0) // q_reps.size(0)) # (batch_size)
+                targets = idxs * (p_reps.size(0) // q_reps.size(0))  # (batch_size)
                 loss += self.compute_loss(scores, targets)
+
             elif self.kd_loss_type == "m3_kd_loss":
                 loss = self.distill_loss(self.kd_loss_type, teacher_targets, scores, group_size)
             else:
                 raise ValueError(f"Invalid kd_loss_type: {self.kd_loss_type}")
         else:
-            idxs = torch.arange(q_reps.size(0), device=q_reps.device, dtype=torch.long)
-            targets = idxs * group_size # (batch_size)
-            loss = self.compute_loss(scores, targets)
+            if pos_nums is None or len(pos_nums) == 0:
+                idxs = torch.arange(q_reps.size(0), device=q_reps.device, dtype=torch.long)
+                targets = idxs * group_size  # (batch_size)
+                loss = self.compute_loss(scores, targets)
+            else:
+                targets = torch.zeros((q_reps.size(0), p_reps.size(0)), device=q_reps.device, dtype=torch.float32)
+                for i, pos_num in enumerate(pos_nums):
+                    start = i * group_size
+                    for j in range(0, pos_num):
+                        targets[i, start + j] = 1
+                loss = self.compute_loss_multi_pos(scores, targets)
 
         return scores, loss
 
@@ -237,6 +246,7 @@ class AbsEmbedderModel(ABC, nn.Module):
         passages: Union[Dict[str, Tensor], List[Dict[str, Tensor]]] = None,
         teacher_scores: Union[None, List[float]] = None,
         no_in_batch_neg_flag: bool = False,
+            pos_nums: List[int]=None
     ):
         """The computation performed at every call.
 
@@ -268,7 +278,7 @@ class AbsEmbedderModel(ABC, nn.Module):
                 else:
                     compute_loss_func = self._compute_in_batch_neg_loss
 
-            scores, loss = compute_loss_func(q_reps, p_reps, teacher_targets=teacher_targets)
+            scores, loss = compute_loss_func(q_reps, p_reps, teacher_targets=teacher_targets, pos_nums=pos_nums)
         else:
             loss = None
 

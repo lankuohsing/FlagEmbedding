@@ -19,7 +19,12 @@ from .AbsArguments import AbsEmbedderDataArguments, AbsEmbedderTrainingArguments
 
 logger = logging.getLogger(__name__)
 
-
+def safe_get_rank():
+    if not dist.is_available() or not dist.is_initialized():
+        return 0
+    else:
+        return dict.get_rank()
+dist.get_rank=safe_get_rank
 class AbsEmbedderTrainDataset(Dataset):
     """Abstract class for training dataset.
 

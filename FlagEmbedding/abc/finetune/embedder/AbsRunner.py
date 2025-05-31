@@ -17,6 +17,11 @@ from .AbsDataset import (
     AbsEmbedderTrainDataset, AbsEmbedderCollator,
     AbsEmbedderSameDatasetTrainDataset, AbsEmbedderSameDatasetCollator
 )
+# from .AbsDatasetMultiPos import (
+#     AbsEmbedderTrainDataset, AbsEmbedderCollator,
+#     AbsEmbedderSameDatasetTrainDataset, AbsEmbedderSameDatasetCollator
+# )
+
 
 logger = logging.getLogger(__name__)
 

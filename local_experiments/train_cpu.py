@@ -45,7 +45,7 @@ class HardcodedModelArgs(EncoderOnlyEmbedderModelArguments):
 class HardcodedDataArgs(EncoderOnlyEmbedderDataArguments):
     train_data: List[str] = field(
         default_factory=lambda: [
-            "/Users/guoxing.lan/projects/github/FlagEmbedding/dataset/train/zh1.jsonl"
+            "/Users/guoxing.lan/projects/github/bge/FlagEmbedding/dataset/train/zh1.jsonl"
         ]
     )
     cache_path: str =  "/Users/guoxing.lan/projects/models/cache"

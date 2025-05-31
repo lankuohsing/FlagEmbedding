@@ -51,7 +51,7 @@ class AbsEmbedderDataArguments:
         default=None, metadata={"help": "Where do you want to store the cached data"}
     )
     train_group_size: int = field(default=8)
-
+    pos_num: int = field(default=1)
     query_max_len: int = field(
         default=32,
         metadata={
