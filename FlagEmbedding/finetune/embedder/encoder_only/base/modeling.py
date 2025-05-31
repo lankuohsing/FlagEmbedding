@@ -46,6 +46,7 @@ class BiEncoderOnlyEmbedderModel(AbsEmbedderModel):
         self.sentence_pooling_method = sentence_pooling_method
         self.normalize_embeddings = normalize_embeddings
         self.cross_entropy = torch.nn.CrossEntropyLoss(reduction='mean')
+        self.binary_cross_entropy = torch.nn.BCEWithLogitsLoss(reduction='mean')
 
     def encode(self, features):
         """Encode and get the embedding.
@@ -164,6 +165,17 @@ class BiEncoderOnlyEmbedderModel(AbsEmbedderModel):
             torch.Tensor: The computed cross entropy loss.
         """
         return self.cross_entropy(scores, target)
+    def compute_loss_multi_pos(self, scores, target):
+        """Compute the loss using cross entropy.
+
+        Args:
+            scores (torch.Tensor): Computed score.
+            target (torch.Tensor): The target value.
+
+        Returns:
+            torch.Tensor: The computed cross entropy loss.
+        """
+        return self.binary_cross_entropy(scores, target)
 
     def gradient_checkpointing_enable(self, **kwargs):
         """
