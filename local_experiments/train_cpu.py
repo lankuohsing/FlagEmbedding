@@ -1,9 +1,10 @@
 from transformers import HfArgumentParser
-
+import datetime
 from typing import List
 from dataclasses import field
 from dataclasses import dataclass
 import os
+from typing import Union
 import sys
 
 from pathlib import Path
@@ -48,7 +49,14 @@ class HardcodedDataArgs(EncoderOnlyEmbedderDataArguments):
             "/Users/guoxing.lan/projects/github/bge/FlagEmbedding/dataset/train/zh1.jsonl"
         ]
     )
+    eval_data: List[str] = field(
+        default_factory=lambda: [
+            "/Users/guoxing.lan/projects/github/bge/FlagEmbedding/dataset/dev/zh1.jsonl"
+        ]
+    )
     cache_path: str =  "/Users/guoxing.lan/projects/models/cache"
+
+    overwrite_output_dir: bool = True
     # pos_num: int = -1 #multi_pos_loss才需要用到
     train_group_size: int = 4
     query_max_len: int = 512
@@ -58,11 +66,22 @@ class HardcodedDataArgs(EncoderOnlyEmbedderDataArguments):
     query_instruction_format: str = "{}{}"
     knowledge_distillation: bool = False
 
+
 @dataclass
 class HardcodedTrainingArgs(EncoderOnlyEmbedderTrainingArguments):
     output_dir: str = "/Users/guoxing.lan/projects/models/outputs/bge-small-zh-v1.5-finetuned"
-    overwrite_output_dir: bool = True
-    learning_rate: float = 5e-6
+    logging_dir: str = "/Users/guoxing.lan/projects/models/outputs/bge-small-zh-v1.5-finetuned/logs"
+    logging_strategy: str = field(
+        default="steps",
+        metadata={"help": "The logging strategy to use."},
+    )
+    logging_steps: int = 1
+    report_to: Union[None, str, list[str]] = field(
+        default='tensorboard', metadata={"help": "The list of integrations to report the results and logs to."}
+    )
+    save_steps: int = 4
+
+    # distributed training
     local_rank: int = -1
     ddp_backend: str = None
     ddp_find_unused_parameters: bool = False
@@ -73,18 +92,25 @@ class HardcodedTrainingArgs(EncoderOnlyEmbedderTrainingArguments):
     use_cpu: bool = True  # 显式使用CPU
     fp16: bool = False
     deepspeed: str = None
+
+    # training parameters
+    learning_rate: float = 5e-6
     num_train_epochs: int = 2
     per_device_train_batch_size: int = 4
     dataloader_drop_last: bool = True
     warmup_ratio: float = 0.1
     gradient_checkpointing: bool = True
-    logging_steps: int = 1
-    save_steps: int = 4
     negatives_cross_device: bool = False
     temperature: float = 0.02
     sentence_pooling_method: str = "cls"
     normalize_embeddings: bool = True
-    kd_loss_type: str = "kl_div"
+
+    # evaluation during training
+    # evaluation_strategy: str = "steps"  # 可选epoch/steps/no
+    # eval_steps: int = 50  # 每50步评估一次
+    # eval_accumulation_steps: int = 1  # 梯度累积步数
+    # load_best_model_at_end: bool = True  # 训练完成后加载最佳模型
+    # metric_for_best_model: str = "eval_loss"  # 以验证集loss作为指标
 # ====================================================================
 def main():
     '''
@@ -100,7 +126,9 @@ def main():
     model_args = HardcodedModelArgs()
     data_args = HardcodedDataArgs()
     training_args = HardcodedTrainingArgs()
-
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    training_args.output_dir=os.path.join(training_args.output_dir,timestamp)
+    training_args.logging_dir = os.path.join(training_args.output_dir, "logs")
     model_args: EncoderOnlyEmbedderModelArguments
     data_args: EncoderOnlyEmbedderDataArguments
     training_args: EncoderOnlyEmbedderTrainingArguments

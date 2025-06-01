@@ -21,7 +21,6 @@ model_args="\
     --cache_dir $HF_HUB_CACHE \
 "
 
-# 修正1：内部双引号改为单引号
 data_args="\
     --train_data $train_data \
     --cache_path ${home_dir}/.cache \
@@ -34,7 +33,6 @@ data_args="\
     --knowledge_distillation False \
 "
 
-# 修正2：--output_dir 引用变量
 training_args="\
     --output_dir ${output_dir} \
     --overwrite_output_dir \
@@ -57,7 +55,6 @@ training_args="\
     --kd_loss_type kl_div \
 "
 
-# 修正3：cmd 添加双引号防止参数分割错误
 cmd="torchrun --nproc_per_node $num_gpus \
     -m FlagEmbedding.finetune.embedder.encoder_only.base \
     $model_args \
