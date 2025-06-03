@@ -14,7 +14,7 @@ from .AbsArguments import (
 from .AbsTrainer import AbsEmbedderTrainer
 from .AbsModeling import AbsEmbedderModel
 from .AbsDataset import (
-    AbsEmbedderTrainDataset, AbsEmbedderCollator,
+    AbsEmbedderTrainDataset, AbsEmbedderEvalDataset, AbsEmbedderCollator,
     AbsEmbedderSameDatasetTrainDataset, AbsEmbedderSameDatasetCollator
 )
 # from .AbsDatasetMultiPos import (
@@ -77,6 +77,7 @@ class AbsEmbedderRunner(ABC):
 
         self.tokenizer, self.model = self.load_tokenizer_and_model()
         self.train_dataset = self.load_train_dataset()
+        self.eval_dataset = self.load_eval_dataset()
         self.data_collator = self.load_data_collator()
         self.trainer = self.load_trainer()
 
@@ -121,6 +122,16 @@ class AbsEmbedderRunner(ABC):
                 tokenizer=self.tokenizer
             )
         return train_dataset
+    def load_eval_dataset(self) -> AbsEmbedderEvalDataset:
+        """Loads the evaluation dataset based on data arguments.
+        Returns:
+            AbsEmbedderEvalDataset: The loaded dataset instance.
+        """
+        eval_dataset = AbsEmbedderEvalDataset(
+            args=self.data_args,
+            tokenizer=self.tokenizer
+        )
+        return eval_dataset
 
     def load_data_collator(self) -> AbsEmbedderCollator:
         """Loads the appropriate data collator.
@@ -128,6 +139,7 @@ class AbsEmbedderRunner(ABC):
         Returns:
             AbsEmbedderCollator: Loaded data collator.
         """
+        # current_mode = "eval" if self.training_args.do_eval else "train"
         if self.data_args.same_dataset_within_batch:
             EmbedCollator = AbsEmbedderSameDatasetCollator
         else:
@@ -140,7 +152,8 @@ class AbsEmbedderRunner(ABC):
             sub_batch_size=self.training_args.sub_batch_size,
             pad_to_multiple_of=self.data_args.pad_to_multiple_of,
             padding=True,
-            return_tensors="pt"
+            return_tensors="pt",
+            # current_mode=current_mode
         )
         return data_collator
 

@@ -23,7 +23,7 @@ class BiEncoderOnlyEmbedderModel(AbsEmbedderModel):
         normalize_embeddings (bool, optional): If True, normalize the embedding vector. Defaults to ``False``.
     """
     TRANSFORMER_CLS = AutoModel
-    
+    _keys_to_ignore_on_save=None
     def __init__(
         self,
         base_model: PreTrainedModel,
@@ -33,7 +33,7 @@ class BiEncoderOnlyEmbedderModel(AbsEmbedderModel):
         sub_batch_size: int = -1,
         kd_loss_type: str = 'kl_div',
         sentence_pooling_method: str = 'cls',
-        normalize_embeddings: bool = False,
+        normalize_embeddings: bool = False
     ):
         super().__init__(
             base_model,

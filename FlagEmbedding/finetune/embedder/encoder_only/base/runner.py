@@ -2,7 +2,7 @@ import logging
 from typing import Tuple
 from transformers import (
     AutoModel, AutoConfig,
-    AutoTokenizer, PreTrainedTokenizer
+    AutoTokenizer, PreTrainedTokenizer,EvalPrediction
 )
 
 from FlagEmbedding.abc.finetune.embedder import AbsEmbedderRunner, AbsEmbedderModel, EmbedderTrainerCallbackForDataRefresh
@@ -11,7 +11,10 @@ from .trainer import EncoderOnlyEmbedderTrainer
 
 logger = logging.getLogger(__name__)
 
-
+def custom_metrics(pred: EvalPrediction) -> dict:
+    """自定义指标：返回loss的两倍（仅示例逻辑）"""
+    # 注意：实际使用时需根据真实loss调整
+    return {"eval_loss": pred.losses.mean()}
 class EncoderOnlyEmbedderRunner(AbsEmbedderRunner):
     """
     Finetune Runner for base embedding models.
@@ -76,8 +79,11 @@ class EncoderOnlyEmbedderRunner(AbsEmbedderRunner):
             model=self.model,
             args=self.training_args,
             train_dataset=self.train_dataset,
+            eval_dataset=self.eval_dataset,
+            compute_metrics=custom_metrics,
             data_collator=self.data_collator,
-            tokenizer=self.tokenizer
+            tokenizer=self.tokenizer,
+            # compute_metrics=lambda x: {"eval_loss": x.loss}
         )
         if self.data_args.same_dataset_within_batch:
             trainer.add_callback(EmbedderTrainerCallbackForDataRefresh(self.train_dataset))

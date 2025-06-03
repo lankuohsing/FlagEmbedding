@@ -43,7 +43,7 @@ class AbsEmbedderModel(ABC, nn.Module):
         negatives_cross_device: bool = False,
         temperature: float = 1.0,
         sub_batch_size: int = -1,
-        kd_loss_type: str = 'kl_div',
+        kd_loss_type: str = 'kl_div'
     ):
         nn.Module.__init__(self)
         self.model = base_model
@@ -279,8 +279,23 @@ class AbsEmbedderModel(ABC, nn.Module):
                     compute_loss_func = self._compute_in_batch_neg_loss
 
             scores, loss = compute_loss_func(q_reps, p_reps, teacher_targets=teacher_targets, pos_nums=pos_nums)
-        else:
-            loss = None
+        else:# evaluation的时候也要正常计算loss
+            if teacher_scores is not None:
+                teacher_scores = torch.tensor(teacher_scores, device=q_reps.device)
+                teacher_scores = teacher_scores.view(q_reps.size(0), -1).detach()  # (batch_size, group_size)
+                teacher_targets = F.softmax(teacher_scores, dim=-1)  # (batch_size, group_size)
+            else:
+                teacher_targets = None
+
+            if no_in_batch_neg_flag:
+                compute_loss_func = self._compute_no_in_batch_neg_loss
+            else:
+                if self.negatives_cross_device:
+                    compute_loss_func = self._compute_cross_device_neg_loss
+                else:
+                    compute_loss_func = self._compute_in_batch_neg_loss
+
+            scores, loss = compute_loss_func(q_reps, p_reps, teacher_targets=teacher_targets, pos_nums=pos_nums)
 
         return EmbedderOutput(
             loss=loss,

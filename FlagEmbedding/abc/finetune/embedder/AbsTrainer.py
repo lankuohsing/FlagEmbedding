@@ -30,8 +30,8 @@ class AbsEmbedderTrainer(ABC, Trainer):
             Union[torch.Tensor, tuple(torch.Tensor, EmbedderOutput)]: The computed loss. If ``return_outputs`` is ``True``, 
                 also returns the model's outputs in a tuple ``(loss, outputs)``.
         """
-
+        inputs.pop("return_loss",None)
         outputs = model(**inputs)
         loss = outputs.loss
 
-        return (loss, outputs) if return_outputs else loss
+        return (loss, outputs) if return_outputs else loss# return_outputs默认为True

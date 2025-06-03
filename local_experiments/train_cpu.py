@@ -59,6 +59,7 @@ class HardcodedDataArgs(EncoderOnlyEmbedderDataArguments):
     overwrite_output_dir: bool = True
     # pos_num: int = -1 #multi_pos_loss才需要用到
     train_group_size: int = 4
+    eval_group_size: int = 4
     query_max_len: int = 512
     passage_max_len: int = 512
     pad_to_multiple_of: int = 8
@@ -77,7 +78,14 @@ class HardcodedTrainingArgs(EncoderOnlyEmbedderTrainingArguments):
     )
     logging_steps: int = 1
     report_to: Union[None, str, list[str]] = field(
-        default='tensorboard', metadata={"help": "The list of integrations to report the results and logs to."}
+        default='all', metadata={"help": "The list of integrations to report the results and logs to."}
+    )
+    include_for_metrics: list[str] = field(
+        default_factory=list,
+        metadata={
+            "help": "List of strings to specify additional data to include in the `compute_metrics` function."
+                    "Options: 'inputs', 'loss'."
+        },
     )
     save_steps: int = 4
 
@@ -97,6 +105,7 @@ class HardcodedTrainingArgs(EncoderOnlyEmbedderTrainingArguments):
     learning_rate: float = 5e-6
     num_train_epochs: int = 2
     per_device_train_batch_size: int = 4
+    per_device_eval_batch_size: int =4
     dataloader_drop_last: bool = True
     warmup_ratio: float = 0.1
     gradient_checkpointing: bool = True
@@ -106,11 +115,15 @@ class HardcodedTrainingArgs(EncoderOnlyEmbedderTrainingArguments):
     normalize_embeddings: bool = True
 
     # evaluation during training
-    # evaluation_strategy: str = "steps"  # 可选epoch/steps/no
-    # eval_steps: int = 50  # 每50步评估一次
-    # eval_accumulation_steps: int = 1  # 梯度累积步数
-    # load_best_model_at_end: bool = True  # 训练完成后加载最佳模型
-    # metric_for_best_model: str = "eval_loss"  # 以验证集loss作为指标
+    do_eval: bool = field(default=True, metadata={"help": "Whether to run eval on the dev set."})
+    eval_strategy: Union[str] = field(
+        default="steps",
+        metadata={"help": "The evaluation strategy to use."},
+    )
+    eval_steps: int = 1  # 每50步评估一次
+    eval_accumulation_steps: int = 1  # 梯度累积步数
+    load_best_model_at_end: bool = True  # 训练完成后加载最佳模型
+    metric_for_best_model: str = "eval_loss"  # 以验证集loss作为指标
 # ====================================================================
 def main():
     '''
@@ -129,6 +142,7 @@ def main():
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     training_args.output_dir=os.path.join(training_args.output_dir,timestamp)
     training_args.logging_dir = os.path.join(training_args.output_dir, "logs")
+    training_args.include_for_metrics=['loss']
     model_args: EncoderOnlyEmbedderModelArguments
     data_args: EncoderOnlyEmbedderDataArguments
     training_args: EncoderOnlyEmbedderTrainingArguments

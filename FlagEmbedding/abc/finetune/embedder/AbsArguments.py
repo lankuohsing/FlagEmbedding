@@ -47,10 +47,17 @@ class AbsEmbedderDataArguments:
             "nargs": "+"
         }
     )
+    eval_data: str = field(
+        default=None, metadata={
+            "help": "One or more paths to evaluation data. `query: str`, `pos: List[str]`, `neg: List[str]` are required in the evaluation data.",
+            "nargs": "+"
+        }
+    )
     cache_path: Optional[str] = field(
         default=None, metadata={"help": "Where do you want to store the cached data"}
     )
     train_group_size: int = field(default=8)
+    eval_group_size: int = field(default=8)
     pos_num: int = field(default=1)
     query_max_len: int = field(
         default=32,
@@ -135,3 +142,10 @@ class AbsEmbedderTrainingArguments(TrainingArguments):
     normalize_embeddings: bool = field(default=True, metadata={"help": "whether to normalize the embeddings"})
     sub_batch_size: Optional[int] = field(default=None, metadata={"help": "sub batch size for training"})
     kd_loss_type: str = field(default='kl_div', metadata={"help": "the loss type for knowledge distillation. Available options: kl_div, m3_kd_loss. Default: kl_div.", "choices": ['kl_div', 'm3_kd_loss']})
+    include_for_metrics: list[str] = field(
+        default_factory=list,
+        metadata={
+            "help": "List of strings to specify additional data to include in the `compute_metrics` function."
+                    "Options: 'inputs', 'loss'."
+        },
+    )
