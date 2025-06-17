@@ -78,7 +78,7 @@ class HardcodedTrainingArgs(EncoderOnlyEmbedderTrainingArguments):
     )
     logging_steps: int = 1
     report_to: Union[None, str, list[str]] = field(
-        default='all', metadata={"help": "The list of integrations to report the results and logs to."}
+        default='tensorboard', metadata={"help": "The list of integrations to report the results and logs to."}
     )
     include_for_metrics: list[str] = field(
         default_factory=list,
@@ -87,7 +87,7 @@ class HardcodedTrainingArgs(EncoderOnlyEmbedderTrainingArguments):
                     "Options: 'inputs', 'loss'."
         },
     )
-    save_steps: int = 4
+    save_steps: int = 1
 
     # distributed training
     local_rank: int = -1
@@ -103,7 +103,7 @@ class HardcodedTrainingArgs(EncoderOnlyEmbedderTrainingArguments):
 
     # training parameters
     learning_rate: float = 5e-6
-    num_train_epochs: int = 2
+    num_train_epochs: int = 3
     per_device_train_batch_size: int = 4
     per_device_eval_batch_size: int =4
     dataloader_drop_last: bool = True
