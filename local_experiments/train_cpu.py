@@ -5,6 +5,7 @@ from dataclasses import field
 from dataclasses import dataclass
 import os
 from typing import Union
+from transformers import EarlyStoppingCallback
 import sys
 
 from pathlib import Path
@@ -56,7 +57,6 @@ class HardcodedDataArgs(EncoderOnlyEmbedderDataArguments):
     )
     cache_path: str =  "/Users/guoxing.lan/projects/models/cache"
 
-    overwrite_output_dir: bool = True
     # pos_num: int = -1 #multi_pos_loss才需要用到
     train_group_size: int = 4
     eval_group_size: int = 4
@@ -70,6 +70,16 @@ class HardcodedDataArgs(EncoderOnlyEmbedderDataArguments):
 
 @dataclass
 class HardcodedTrainingArgs(EncoderOnlyEmbedderTrainingArguments):
+    # Early stopping parameters
+    early_stopping_patience: int = field(
+        default=3,
+        metadata={"help": "Number of evaluation calls with no improvement after which training will be stopped."}
+    )
+    early_stopping_threshold: float = field(
+        default=0.0,
+        metadata={"help": "Threshold for measuring the new optimum, to only focus on significant improvements."}
+    )
+
     output_dir: str = "/Users/guoxing.lan/projects/models/outputs/bge-small-zh-v1.5-finetuned"
     logging_dir: str = "/Users/guoxing.lan/projects/models/outputs/bge-small-zh-v1.5-finetuned/logs"
     logging_strategy: str = field(
@@ -100,7 +110,10 @@ class HardcodedTrainingArgs(EncoderOnlyEmbedderTrainingArguments):
     use_cpu: bool = True  # 显式使用CPU
     fp16: bool = False
     deepspeed: str = None
-
+    overwrite_output_dir: bool = False
+    # resume_from_checkpoint: str=""
+    # resume_from_checkpoint: bool = True
+    # resume_from_checkpoint: str = "/Users/guoxing.lan/projects/models/outputs/bge-small-zh-v1.5-finetuned/20250617/checkpoint-4"
     # training parameters
     learning_rate: float = 5e-6
     num_train_epochs: int = 3
@@ -139,7 +152,16 @@ def main():
     model_args = HardcodedModelArgs()
     data_args = HardcodedDataArgs()
     training_args = HardcodedTrainingArgs()
+    # 添加early stopping callback
+    callbacks = [
+        EarlyStoppingCallback(
+            early_stopping_patience=training_args.early_stopping_patience,
+            early_stopping_threshold=training_args.early_stopping_threshold
+        )
+    ]
+
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    # timestamp='20250617'
     training_args.output_dir=os.path.join(training_args.output_dir,timestamp)
     training_args.logging_dir = os.path.join(training_args.output_dir, "logs")
     training_args.include_for_metrics=['loss']
@@ -150,7 +172,8 @@ def main():
     runner = EncoderOnlyEmbedderRunner(
         model_args=model_args,
         data_args=data_args,
-        training_args=training_args
+        training_args=training_args,
+        callbacks=callbacks  # 添加callbacks参数
     )
     runner.run()
 

@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Tuple
 from abc import ABC, abstractmethod
 from transformers import set_seed, PreTrainedTokenizer
+from transformers import TrainerCallback
+from typing import List, Optional
 
 
 from .AbsArguments import (
@@ -38,12 +40,13 @@ class AbsEmbedderRunner(ABC):
         self,
         model_args: AbsEmbedderModelArguments,
         data_args: AbsEmbedderDataArguments,
-        training_args: AbsEmbedderTrainingArguments
+        training_args: AbsEmbedderTrainingArguments,
+        callbacks: Optional[List[TrainerCallback]] = None  # 新增callbacks参数
     ):
         self.model_args = model_args
         self.data_args = data_args
         self.training_args = training_args
-
+        self.callbacks = callbacks or []  # 默认空列表
         if (
             os.path.exists(training_args.output_dir)
             and os.listdir(training_args.output_dir)

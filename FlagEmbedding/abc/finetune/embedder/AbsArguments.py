@@ -149,3 +149,12 @@ class AbsEmbedderTrainingArguments(TrainingArguments):
                     "Options: 'inputs', 'loss'."
         },
     )
+    # Early stopping parameters
+    early_stopping_patience: int = field(
+        default=3,
+        metadata={"help": "Number of evaluation calls with no improvement after which training will be stopped."}
+    )
+    early_stopping_threshold: float = field(
+        default=0.0,
+        metadata={"help": "Threshold for measuring the new optimum, to only focus on significant improvements."}
+    )

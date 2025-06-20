@@ -83,6 +83,7 @@ class EncoderOnlyEmbedderRunner(AbsEmbedderRunner):
             compute_metrics=custom_metrics,
             data_collator=self.data_collator,
             tokenizer=self.tokenizer,
+            callbacks=self.callbacks  # 传递callbacks参数
             # compute_metrics=lambda x: {"eval_loss": x.loss}
         )
         if self.data_args.same_dataset_within_batch:
