@@ -71,8 +71,12 @@ class HardcodedDataArgs(EncoderOnlyEmbedderDataArguments):
 @dataclass
 class HardcodedTrainingArgs(EncoderOnlyEmbedderTrainingArguments):
     # Early stopping parameters
+    use_early_stopping: bool = field(
+        default=False,
+        metadata={"help": "Whether to enable early stopping."}
+    )
     early_stopping_patience: int = field(
-        default=3,
+        default=1,
         metadata={"help": "Number of evaluation calls with no improvement after which training will be stopped."}
     )
     early_stopping_threshold: float = field(
@@ -152,13 +156,21 @@ def main():
     model_args = HardcodedModelArgs()
     data_args = HardcodedDataArgs()
     training_args = HardcodedTrainingArgs()
-    # 添加early stopping callback
-    callbacks = [
-        EarlyStoppingCallback(
-            early_stopping_patience=training_args.early_stopping_patience,
-            early_stopping_threshold=training_args.early_stopping_threshold
+    callbacks=[]
+    if training_args.use_early_stopping:
+        callbacks.append(
+            EarlyStoppingCallback(
+                early_stopping_patience=training_args.early_stopping_patience,
+                early_stopping_threshold=training_args.early_stopping_threshold
+            )
         )
-    ]
+        # 添加early stopping callback
+        callbacks = [
+            EarlyStoppingCallback(
+                early_stopping_patience=training_args.early_stopping_patience,
+                early_stopping_threshold=training_args.early_stopping_threshold
+            )
+        ]
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     # timestamp='20250617'

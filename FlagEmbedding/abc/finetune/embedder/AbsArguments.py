@@ -150,6 +150,10 @@ class AbsEmbedderTrainingArguments(TrainingArguments):
         },
     )
     # Early stopping parameters
+    use_early_stopping: bool = field(
+        default=False,
+        metadata={"help": "Whether to enable early stopping."}
+    )
     early_stopping_patience: int = field(
         default=3,
         metadata={"help": "Number of evaluation calls with no improvement after which training will be stopped."}
